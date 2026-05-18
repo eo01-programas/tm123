@@ -223,19 +223,16 @@
                     ${disabled ? '' : `data-record-id="${TintoreriaUtils.escapeHtml(recordId)}"`}
                 >
                     <div class="record-head">
-                        <div>
-                            <div class="record-title">${TintoreriaUtils.escapeHtml(formatRecordTitle(record))}</div>
-                            <div class="record-subtitle">${article}</div>
-                        </div>
+                        <div class="record-title">${TintoreriaUtils.escapeHtml(formatRecordTitle(record))}</div>
                         <span class="status-pill ${disabled ? 'status-registered' : 'status-pending'}">
                             ${disabled ? 'Registrado' : 'Pendiente'}
                         </span>
                     </div>
 
+                    <div class="record-subtitle">${article}</div>
+
                     <div class="record-meta">
-                        <div class="meta-line"><strong>Kg(crudo):</strong> ${TintoreriaUtils.escapeHtml(record.peso_kg_crudo || '0')}</div>
-                        <div class="meta-line"><strong>#rollos/cntd:</strong> ${TintoreriaUtils.escapeHtml(record.cantidad_crudo || '0')}</div>
-                        <div class="meta-line"><strong>Ruta:</strong> ${TintoreriaUtils.escapeHtml(record.ruta || '-')}</div>
+                        <div class="meta-line"><strong>Kg(crudo):</strong> ${TintoreriaUtils.escapeHtml(record.peso_kg_crudo || '0')} <span class="meta-separator">|</span> <strong>#rollos/cntd:</strong> ${TintoreriaUtils.escapeHtml(record.cantidad_crudo || '0')}</div>
                     </div>
 
                     ${reasonText}
