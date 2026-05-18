@@ -236,10 +236,10 @@ h2 {
 .record-card {
     border: 1px solid var(--border);
     border-radius: 18px;
-    padding: 14px;
+    padding: 12px;
     background: var(--surface);
     display: grid;
-    gap: 10px;
+    gap: 8px;
     transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
 }
 
@@ -265,25 +265,27 @@ h2 {
     display: flex;
     justify-content: space-between;
     gap: 10px;
-    align-items: flex-start;
+    align-items: center;
 }
 
 .record-title {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 800;
-    line-height: 1.1;
+    line-height: 1.2;
+    min-width: 0;
 }
 
 .record-subtitle {
-    margin-top: 4px;
     font-size: 13px;
     line-height: 1.35;
     color: var(--muted);
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 .record-meta {
     display: grid;
-    gap: 6px;
+    gap: 4px;
 }
 
 .meta-line {
@@ -293,6 +295,12 @@ h2 {
 
 .meta-line strong {
     color: var(--text);
+}
+
+.meta-separator {
+    display: inline-block;
+    margin: 0 4px;
+    color: var(--muted);
 }
 
 .status-pill {
@@ -305,6 +313,7 @@ h2 {
     font-weight: 800;
     letter-spacing: 0.03em;
     text-transform: uppercase;
+    flex: 0 0 auto;
 }
 
 .status-pending {
@@ -322,7 +331,6 @@ h2 {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    margin-top: 2px;
 }
 
 .checkbox-label {
