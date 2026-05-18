@@ -196,6 +196,16 @@ h2 {
     color: var(--accent);
 }
 
+.section-action-button {
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+    flex: 0 0 auto;
+}
+
 .ghost-button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -230,10 +240,25 @@ h2 {
     background: var(--surface);
     display: grid;
     gap: 10px;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
 }
 
 .record-card.record-card-disabled {
     background: #f8fafc;
+}
+
+.record-card.record-card-selectable {
+    cursor: pointer;
+}
+
+.record-card.record-card-selectable:active {
+    transform: scale(0.995);
+}
+
+.record-card.record-card-selected {
+    border-color: rgba(201, 134, 17, 0.9);
+    background: #fffaf1;
+    box-shadow: 0 10px 24px rgba(201, 134, 17, 0.14);
 }
 
 .record-head {
@@ -354,10 +379,6 @@ h2 {
         border-radius: 18px;
     }
 
-    .section-head {
-        flex-direction: column;
-    }
-
     .ghost-button {
         width: 100%;
     }
@@ -366,5 +387,13 @@ h2 {
         width: auto;
         min-width: 104px;
         padding-inline: 18px;
+    }
+
+    .section-head {
+        align-items: center;
+    }
+
+    .section-action-button {
+        width: auto;
     }
 }
