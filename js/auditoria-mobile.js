@@ -210,6 +210,7 @@
             const recordId = String(record.id_registro || '');
             const checked = state.selectedIds.has(recordId) ? 'checked' : '';
             const disabled = isAuditoriaAlreadyRegistered(record);
+            const selectedClass = !disabled && checked ? ' record-card-selected' : '';
             const article = TintoreriaUtils.escapeHtml(record.articulo || '');
             const statusText = TintoreriaUtils.escapeHtml(getAuditoriaRegisteredStatus(record));
             const reasonText = disabled && isRejectedRecord(record)
@@ -217,7 +218,10 @@
                 : '';
 
             return `
-                <article class="record-card${disabled ? ' record-card-disabled' : ''}">
+                <article
+                    class="record-card${disabled ? ' record-card-disabled' : ' record-card-selectable'}${selectedClass}"
+                    ${disabled ? '' : `data-record-id="${TintoreriaUtils.escapeHtml(recordId)}"`}
+                >
                     <div class="record-head">
                         <div>
                             <div class="record-title">${TintoreriaUtils.escapeHtml(formatRecordTitle(record))}</div>
@@ -262,6 +266,14 @@
         }
 
         renderResults();
+    }
+
+    function toggleSelected(recordId) {
+        if (!recordId) {
+            return;
+        }
+
+        updateSelected(recordId, !state.selectedIds.has(recordId));
     }
 
     function toggleSelectAll() {
@@ -403,6 +415,24 @@
             }
 
             updateSelected(target.dataset.recordId || '', target.checked);
+        });
+
+        els.resultList.addEventListener('click', (event) => {
+            const target = event.target;
+            if (!(target instanceof Element)) {
+                return;
+            }
+
+            if (target.closest('.checkbox-label') || target.closest('.auditoria-mobile-checkbox')) {
+                return;
+            }
+
+            const card = target.closest('.record-card-selectable');
+            if (!card) {
+                return;
+            }
+
+            toggleSelected(card.getAttribute('data-record-id') || '');
         });
 
         els.selectAllBtn.addEventListener('click', toggleSelectAll);
