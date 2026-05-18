@@ -1,21 +1,22 @@
 (() => {
-    const STORAGE_META_KEY = `${LOCAL_STORAGE_KEY}-meta`;
+    const STORAGE_KEY = `${LOCAL_STORAGE_KEY}-mobile-calidad`;
+    const STORAGE_META_KEY = `${STORAGE_KEY}-meta`;
 
     function loadLocalRecords() {
         try {
-            const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+            const raw = localStorage.getItem(STORAGE_KEY);
             const parsed = raw ? JSON.parse(raw) : [];
             return Array.isArray(parsed)
                 ? parsed.map((record) => TintoreriaUtils.defaultRecord(record))
                 : [];
         } catch (error) {
-            console.error('No se pudo leer localStorage', error);
+            console.error('No se pudo leer el cache local', error);
             return [];
         }
     }
 
     function saveLocalRecords(records) {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(records));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
     }
 
     function loadStorageMeta() {
@@ -39,6 +40,7 @@
         const normalizedRecords = TintoreriaUtils.sortRecords(
             (records || []).map((record) => TintoreriaUtils.defaultRecord(record))
         );
+
         saveLocalRecords(normalizedRecords);
         saveStorageMeta({
             mode,
@@ -46,6 +48,14 @@
             recordCount: normalizedRecords.length
         });
         return normalizedRecords;
+    }
+
+    function updateRemoteCache(records) {
+        return saveRecordsSnapshot(records, 'remote');
+    }
+
+    function updateLocalCache(records) {
+        return saveRecordsSnapshot(records, 'local');
     }
 
     function loadRemoteCachedRecords() {
@@ -78,109 +88,123 @@
         return Array.from(mergedById.values());
     }
 
-    function updateRemoteCache(records) {
-        return saveRecordsSnapshot(records, 'remote');
-    }
+    function parseGvizPayload(text) {
+        const source = String(text || '').trim();
+        const prefix = 'google.visualization.Query.setResponse(';
+        const suffix = ');';
+        const start = source.indexOf(prefix);
 
-    function updateLocalModeSnapshot(records) {
-        return saveRecordsSnapshot(records, 'local');
-    }
-
-    function matchesRecord(record, recordId, match = null) {
-        if (!record || String(record.id_registro || '').trim() !== String(recordId || '').trim()) {
-            return false;
+        if (start === -1) {
+            throw new Error('La respuesta del Sheet no tiene el formato esperado.');
         }
 
-        const recordKey = match && match.record_key
-            ? String(match.record_key).trim()
-            : '';
-
-        if (!recordKey) {
-            return true;
+        const jsonStart = start + prefix.length;
+        const jsonEnd = source.lastIndexOf(suffix);
+        if (jsonEnd === -1 || jsonEnd <= jsonStart) {
+            throw new Error('No se pudo extraer el JSON del Sheet.');
         }
 
-        return TintoreriaUtils.buildRecordMatchKey(record) === recordKey;
+        return JSON.parse(source.slice(jsonStart, jsonEnd));
     }
 
-    function buildLocalRecord(record) {
-        return TintoreriaUtils.defaultRecord({
-            ...record,
-            id_registro: record.id_registro || `LOCAL-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-            fecha_registro: record.fecha_registro || TintoreriaUtils.formatDateTimeShort(new Date()),
-            plegado_estado: record.plegado_estado || 'X PROG'
+    function normalizeGvizCell(cell) {
+        if (!cell || cell.v === null || cell.v === undefined) {
+            return '';
+        }
+
+        if (typeof cell.v === 'string' && cell.v.startsWith('Date(')) {
+            return String(cell.f || '').trim();
+        }
+
+        if (cell.f !== undefined && cell.f !== null && String(cell.f).trim() !== '') {
+            return String(cell.f).trim();
+        }
+
+        return String(cell.v).trim();
+    }
+
+    function buildRecordsFromGvizTable(table) {
+        const cols = Array.isArray(table && table.cols) ? table.cols : [];
+        const rows = Array.isArray(table && table.rows) ? table.rows : [];
+        const headers = cols.map((column) => String(column && column.label ? column.label : '').trim());
+
+        return rows.map((row) => {
+            const cells = Array.isArray(row && row.c) ? row.c : [];
+            const record = {};
+
+            headers.forEach((header, index) => {
+                if (!header) {
+                    return;
+                }
+                record[header] = normalizeGvizCell(cells[index]);
+            });
+
+            return TintoreriaUtils.defaultRecord(record);
         });
     }
 
-    async function parseJsonResponse(response) {
+    async function listRemoteRecords() {
+        const url = new URL(`https://docs.google.com/spreadsheets/d/${encodeURIComponent(SHEET_ID)}/gviz/tq`);
+        url.searchParams.set('tqx', 'out:json');
+        url.searchParams.set('sheet', DATA_SHEET_NAME);
+
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json, text/javascript, */*;q=0.1'
+            }
+        });
+
         if (!response.ok) {
-            throw new Error(`La API respondio con HTTP ${response.status}.`);
+            throw new Error(`El Sheet respondio con HTTP ${response.status}.`);
         }
 
-        const text = await response.text();
-        let data;
-
-        try {
-            data = JSON.parse(text);
-        } catch (error) {
-            throw new Error('La respuesta del Apps Script no es JSON valido.');
+        const payload = parseGvizPayload(await response.text());
+        if (payload.status !== 'ok') {
+            throw new Error('El Sheet no devolvio datos validos.');
         }
 
-        if (!data.success) {
-            throw new Error(data.message || 'La API devolvio un error.');
-        }
-
-        return data;
+        return buildRecordsFromGvizTable(payload.table || {});
     }
 
-    async function postPayload(payload) {
+    async function postPayloadNoCors(payload) {
         const formData = new URLSearchParams();
         formData.set('payload', JSON.stringify(payload));
         if (payload && payload.action) {
             formData.set('action', String(payload.action));
         }
 
-        const response = await fetch(WEB_APP_URL, {
+        await fetch(WEB_APP_URL, {
             method: 'POST',
+            mode: 'no-cors',
             body: formData
         });
-
-        return parseJsonResponse(response);
     }
 
-    async function listRemoteRecords() {
-        const url = new URL(WEB_APP_URL);
-        url.searchParams.set('action', 'list');
+    function updateLocalRecord(recordId, changes) {
+        const current = loadLocalRecords();
+        const index = current.findIndex((record) => String(record.id_registro || '').trim() === String(recordId || '').trim());
 
-        const response = await fetch(url.toString(), {
-            method: 'GET',
-            headers: {
-                Accept: 'application/json'
-            }
+        if (index === -1) {
+            throw new Error('No se encontro el registro a actualizar.');
+        }
+
+        current[index] = TintoreriaUtils.defaultRecord({
+            ...current[index],
+            ...changes
         });
 
-        return parseJsonResponse(response);
+        updateLocalCache(current);
+        return current[index];
     }
 
     window.TintoreriaAPI = {
         getCachedRecords() {
-            if (!TintoreriaUtils.hasConfiguredWebAppUrl()) {
-                return null;
-            }
-
             return loadRemoteCachedRecords();
         },
 
         async listRecords() {
-            if (!TintoreriaUtils.hasConfiguredWebAppUrl()) {
-                return {
-                    success: true,
-                    source: 'local',
-                    records: TintoreriaUtils.sortRecords(loadLocalRecords())
-                };
-            }
-
-            const data = await listRemoteRecords();
-            const records = updateRemoteCache(data.records || []);
+            const records = updateRemoteCache(await listRemoteRecords());
             return {
                 success: true,
                 source: 'remote',
@@ -188,112 +212,43 @@
             };
         },
 
-        async appendRecords(records) {
-            if (!Array.isArray(records) || records.length === 0) {
-                return {
-                    success: true,
-                    source: TintoreriaUtils.hasConfiguredWebAppUrl() ? 'remote' : 'local',
-                    records: []
-                };
-            }
-
-            const prepared = records.map((record) => TintoreriaUtils.defaultRecord(record));
-
-            if (!TintoreriaUtils.hasConfiguredWebAppUrl()) {
-                const current = loadLocalRecords();
-                const existingKeys = new Set(
-                    current
-                        .map((record) => TintoreriaUtils.buildMaestroDuplicateKey(record.op_tela, record.partida, record.cod_art, record.color))
-                        .filter(Boolean)
-                );
-                const appended = [];
-
-                prepared.forEach((record) => {
-                    const duplicateKey = TintoreriaUtils.buildMaestroDuplicateKey(record.op_tela, record.partida, record.cod_art, record.color);
-                    if (duplicateKey && existingKeys.has(duplicateKey)) {
-                        return;
-                    }
-
-                    const builtRecord = buildLocalRecord(record);
-                    appended.push(builtRecord);
-
-                    if (duplicateKey) {
-                        existingKeys.add(duplicateKey);
-                    }
-                });
-
-                const merged = TintoreriaUtils.sortRecords(current.concat(appended));
-                updateLocalModeSnapshot(merged);
-                return {
-                    success: true,
-                    source: 'local',
-                    records: appended
-                };
-            }
-
-            const data = await postPayload({
-                action: 'appendRecords',
-                records: prepared
-            });
-            const appended = (data.records || []).map((record) => TintoreriaUtils.defaultRecord(record));
-            const cached = loadRemoteCachedRecords();
-            if (cached) {
-                updateRemoteCache(mergeRecordsById(cached.records, appended));
-            }
-
-            return {
-                success: true,
-                source: 'remote',
-                records: appended
-            };
-        },
-
-        async updateRecord(recordId, changes, options = {}) {
+        async updateRecord(recordId, changes) {
             if (!recordId) {
                 throw new Error('El registro no tiene id_registro.');
             }
 
-            const match = options && options.match ? options.match : null;
-
             if (!TintoreriaUtils.hasConfiguredWebAppUrl()) {
-                const current = loadLocalRecords();
-                const index = current.findIndex((record) => matchesRecord(record, recordId, match));
-
-                if (index === -1) {
-                    throw new Error('No se encontro el registro a actualizar.');
-                }
-
-                current[index] = TintoreriaUtils.defaultRecord({
-                    ...current[index],
-                    ...changes
-                });
-                updateLocalModeSnapshot(current);
-
                 return {
                     success: true,
                     source: 'local',
-                    record: current[index]
+                    record: updateLocalRecord(recordId, changes)
                 };
             }
 
-            const data = await postPayload({
+            const cached = loadRemoteCachedRecords();
+            let optimisticRecord = null;
+
+            if (cached && Array.isArray(cached.records)) {
+                const current = cached.records.find((record) => String(record.id_registro || '') === String(recordId));
+                optimisticRecord = TintoreriaUtils.defaultRecord({
+                    ...(current || {}),
+                    id_registro: recordId,
+                    ...changes
+                });
+
+                updateRemoteCache(mergeRecordsById(cached.records, [optimisticRecord]));
+            }
+
+            await postPayloadNoCors({
                 action: 'updateRecord',
                 id_registro: recordId,
-                changes,
-                match
+                changes
             });
-            const updatedRecord = data.record ? TintoreriaUtils.defaultRecord(data.record) : null;
-            const cached = loadRemoteCachedRecords();
-
-            if (updatedRecord && cached) {
-                const merged = mergeRecordsById(cached.records, [updatedRecord]);
-                updateRemoteCache(merged);
-            }
 
             return {
                 success: true,
                 source: 'remote',
-                record: updatedRecord
+                record: optimisticRecord
             };
         }
     };
