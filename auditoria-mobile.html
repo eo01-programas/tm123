@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Auditoria Movil</title>
+    <link rel="stylesheet" href="css/auditoria-mobile.css">
+</head>
+<body>
+    <main class="mobile-shell">
+        <section class="mobile-card">
+            <form id="auditoria-mobile-search-form" class="stack-gap" autocomplete="off">
+                <label class="field-label" for="auditoria-mobile-search">OP-PTDA</label>
+                <div class="search-row">
+                    <input
+                        id="auditoria-mobile-search"
+                        class="mobile-input"
+                        type="text"
+                        inputmode="text"
+                        maxlength="18">
+                    <button type="submit" class="primary-button">Buscar</button>
+                </div>
+            </form>
+            <p class="status-line" id="auditoria-mobile-sync-status">Cargando datos...</p>
+        </section>
+
+        <section class="mobile-card">
+            <div class="section-head">
+                <div>
+                    <h2>Resultados</h2>
+                    <p class="section-copy" id="auditoria-mobile-result-summary">Ingresa una OP-PTDA para comenzar.</p>
+                </div>
+                <button type="button" id="auditoria-mobile-select-all" class="ghost-button hidden">Seleccionar todo</button>
+            </div>
+            <div id="auditoria-mobile-results" class="result-list">
+                <div class="empty-state">Ingresa una OP-PTDA para ver coincidencias exactas.</div>
+            </div>
+        </section>
+
+        <section class="mobile-card hidden" id="auditoria-mobile-form-card">
+            <div class="section-head">
+                <div>
+                    <h2>Registro</h2>
+                    <p class="section-copy" id="auditoria-mobile-selection-summary"></p>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <label class="field-group">
+                    <span class="field-label">Turno</span>
+                    <input id="auditoria-mobile-turno" class="mobile-input" type="text" readonly>
+                </label>
+
+                <label class="field-group">
+                    <span class="field-label">Auditor</span>
+                    <input
+                        id="auditoria-mobile-auditor"
+                        class="mobile-input"
+                        type="text"
+                        placeholder="Nombre del auditor"
+                        autocomplete="name">
+                </label>
+            </div>
+
+            <button type="button" id="auditoria-mobile-save" class="primary-button primary-button-wide">Guardar Auditoria</button>
+        </section>
+    </main>
+
+    <div id="auditoria-mobile-toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="js/auditoria-mobile.js"></script>
+</body>
+</html>
