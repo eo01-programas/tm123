@@ -349,12 +349,18 @@ h2 {
 }
 
 .record-reason {
+    display: grid;
+    gap: 6px;
     padding: 10px 12px;
     border-radius: 14px;
     background: var(--surface-muted);
     font-size: 13px;
     line-height: 1.4;
     color: var(--muted);
+}
+
+.record-line {
+    line-height: 1.45;
 }
 
 .hidden {
