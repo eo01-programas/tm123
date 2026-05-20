@@ -28,8 +28,8 @@
     function calculateTurno() {
         const now = new Date();
         const hours = now.getHours();
-        if (hours >= 7 && hours < 15) return '1T';
-        if (hours >= 15 && hours < 23) return '2T';
+        if (hours >= 6 && hours < 14) return '1T';
+        if (hours >= 14 && hours < 23) return '2T';
         return '3T';
     }
 
@@ -64,18 +64,34 @@
         return Boolean(record && String(record.calidad_inicio || '').trim());
     }
 
-    function getRejectReasonEntries(record) {
-        return [1, 2, 3, 4]
+    function getRegisteredObservationLines(record) {
+        if (!isAuditoriaAlreadyRegistered(record)) {
+            return [];
+        }
+
+        const rejectionLabels = {
+            1: '1er Rechazo',
+            2: '2do Rechazo',
+            3: '3er Rechazo',
+            4: '4to Rechazo'
+        };
+
+        const rejectionLines = [1, 2, 3, 4]
             .map((index) => {
-                const value = String(record && record[`motivo_rechazo_${index}`] ? record[`motivo_rechazo_${index}`] : '').trim();
-                return value
-                    ? {
-                        label: `Motivo ${index}`,
-                        value
-                    }
-                    : null;
+                const reason = String(record && record[`motivo_rechazo_${index}`] ? record[`motivo_rechazo_${index}`] : '').trim();
+                const supervisor = String(record && record[`supervisor_rechazo_${index}`] ? record[`supervisor_rechazo_${index}`] : '').trim();
+                const parts = [rejectionLabels[index], reason, supervisor].filter(Boolean);
+                return parts.length > 1 ? parts.join(' - ') : '';
             })
             .filter(Boolean);
+
+        const approvalType = String(record && record.tipo_aprobacion ? record.tipo_aprobacion : '').trim();
+        const approvedBy = String(record && record.quien_aprobo ? record.quien_aprobo : '').trim();
+        const approvalLine = [approvalType, approvedBy].filter(Boolean).join(' - ');
+
+        return approvalLine
+            ? [...rejectionLines, approvalLine]
+            : rejectionLines;
     }
 
     function getAuditoriaRegisteredStatus(record) {
@@ -84,15 +100,11 @@
         }
 
         if (normalizeCalidadState(record) === 'OK') {
-            return 'Ya fue registrado: APROBADO';
+            return 'Ya fue registrado';
         }
 
         if (isRejectedRecord(record)) {
-            const reasons = getRejectReasonEntries(record);
-            const reasonLabel = reasons.length
-                ? ` - ${reasons.map((entry) => `${entry.label}: ${entry.value}`).join(' | ')}`
-                : '';
-            return `Ya fue registrado: ${getDisplayCalidadState(record).toUpperCase()}${reasonLabel}`;
+            return `Ya fue registrado: ${getDisplayCalidadState(record).toUpperCase()}`;
         }
 
         return 'Ya fue registrado: AUDITANDO';
@@ -213,9 +225,16 @@
             const selectedClass = !disabled && checked ? ' record-card-selected' : '';
             const article = TintoreriaUtils.escapeHtml(record.articulo || '');
             const statusText = TintoreriaUtils.escapeHtml(getAuditoriaRegisteredStatus(record));
-            const reasonText = disabled && isRejectedRecord(record)
-                ? `<div class="record-reason">${TintoreriaUtils.escapeHtml(statusText)}</div>`
+            const observationLines = disabled ? getRegisteredObservationLines(record) : [];
+            const reasonText = observationLines.length
+                ? `<div class="record-reason">${observationLines.map((line) => `<div class="record-line">${TintoreriaUtils.escapeHtml(line)}</div>`).join('')}</div>`
                 : '';
+            const disabledFooter = disabled && !observationLines.length
+                ? `<span class="meta-line">${statusText}</span>`
+                : '';
+            const selectRow = disabled
+                ? (disabledFooter ? `<div class="select-row">${disabledFooter}</div>` : '')
+                : `<div class="select-row"><label class="checkbox-label"><input type="checkbox" class="auditoria-mobile-checkbox" data-record-id="${TintoreriaUtils.escapeHtml(recordId)}" ${checked}>Seleccionar</label></div>`;
 
             return `
                 <article
@@ -237,12 +256,7 @@
 
                     ${reasonText}
 
-                    <div class="select-row">
-                        ${disabled
-                            ? `<span class="meta-line">${statusText}</span>`
-                            : `<label class="checkbox-label"><input type="checkbox" class="auditoria-mobile-checkbox" data-record-id="${TintoreriaUtils.escapeHtml(recordId)}" ${checked}>Seleccionar</label>`
-                        }
-                    </div>
+                    ${selectRow}
                 </article>
             `;
         }).join('');
