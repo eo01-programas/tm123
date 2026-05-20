@@ -400,11 +400,37 @@
         }
     }
 
+    function isEditableTarget(target) {
+        return target instanceof Element
+            && Boolean(target.closest('input, textarea, select, [contenteditable="true"], label'));
+    }
+
+    function dismissKeyboardIfNeeded(target) {
+        if (isEditableTarget(target)) {
+            return;
+        }
+
+        const activeElement = document.activeElement;
+        if (!(activeElement instanceof HTMLElement)) {
+            return;
+        }
+
+        if (!activeElement.matches('input, textarea, select, [contenteditable="true"]')) {
+            return;
+        }
+
+        activeElement.blur();
+    }
+
     function bindEvents() {
         const els = getElements();
         if (!els.form || !els.searchInput || !els.resultList || !els.saveBtn || !els.selectAllBtn) {
             return;
         }
+
+        document.addEventListener('pointerdown', (event) => {
+            dismissKeyboardIfNeeded(event.target);
+        });
 
         els.form.addEventListener('submit', (event) => {
             event.preventDefault();
