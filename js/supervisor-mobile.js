@@ -526,9 +526,11 @@
 
         try {
             const turno = TintoreriaUtils.calculateProductionTurno();
+            const calidadFin = TintoreriaUtils.formatProcessDateTime(new Date());
             const responses = await Promise.all(selectedRecords.map((record) => {
                 const updates = {
                     calidad_estado: 'OK',
+                    calidad_fin: calidadFin,
                     tipo_aprobacion: tipoAprobacion,
                     quien_aprobo: quienAprobo,
                     supervisor_aprobacion: supervisor,
