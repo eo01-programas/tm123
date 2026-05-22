@@ -167,7 +167,16 @@
                 if (!header) {
                     return;
                 }
-                record[header] = normalizeGvizCell(cells[index]);
+
+                const value = normalizeGvizCell(cells[index]);
+                if (Object.prototype.hasOwnProperty.call(record, header)) {
+                    if (!String(record[header] || '').trim() && String(value || '').trim()) {
+                        record[header] = value;
+                    }
+                    return;
+                }
+
+                record[header] = value;
             });
 
             return TintoreriaUtils.defaultRecord(record);
