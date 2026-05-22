@@ -21,6 +21,7 @@
             selectionSummary: document.getElementById('auditoria-mobile-selection-summary'),
             turnoInput: document.getElementById('auditoria-mobile-turno'),
             auditorInput: document.getElementById('auditoria-mobile-auditor'),
+            observationInput: document.getElementById('auditoria-mobile-observacion-calidad'),
             saveBtn: document.getElementById('auditoria-mobile-save'),
             toast: document.getElementById('auditoria-mobile-toast'),
             supervisorFab: document.getElementById('auditoria-mobile-supervisor-fab')
@@ -166,6 +167,27 @@
 
     function findRecordById(recordId) {
         return state.records.find((record) => String(record.id_registro || '') === String(recordId || '')) || null;
+    }
+
+    function getSelectedRecords() {
+        return state.filteredRecords.filter((record) => state.selectedIds.has(String(record.id_registro || '')));
+    }
+
+    function getSharedFieldValue(records, fieldName) {
+        if (!Array.isArray(records) || !records.length || !fieldName) {
+            return '';
+        }
+
+        const values = records
+            .map((record) => String(record && record[fieldName] ? record[fieldName] : ''))
+            .map((value) => value.trim());
+
+        if (values.length === 1) {
+            return values[0];
+        }
+
+        const firstValue = values[0];
+        return values.every((value) => value === firstValue) ? firstValue : '';
     }
 
     function setSyncStatus(message, isError = false) {
@@ -317,6 +339,11 @@
 
         els.selectionSummary.textContent = '';
         els.formCard.classList.toggle('hidden', selectedCount === 0);
+        if (els.observationInput) {
+            els.observationInput.value = selectedCount > 0
+                ? getSharedFieldValue(getSelectedRecords(), 'observacion_calidad')
+                : '';
+        }
     }
 
     function syncSupervisorFabVisibility() {
@@ -423,6 +450,7 @@
         const els = getElements();
         const selectedIds = Array.from(state.selectedIds);
         const auditor = TintoreriaUtils.sanitizePersonName(els.auditorInput.value || '');
+        const observacion = String(els.observationInput && els.observationInput.value ? els.observationInput.value : '').trim();
         const turno = String(els.turnoInput.value || calculateTurno()).trim() || calculateTurno();
 
         if (!selectedIds.length) {
@@ -449,7 +477,8 @@
                 const updates = {
                     calidad_turno: turno,
                     calidad_auditor: auditor,
-                    calidad_inicio: TintoreriaUtils.formatProcessDateTime(new Date())
+                    calidad_inicio: TintoreriaUtils.formatProcessDateTime(new Date()),
+                    observacion_calidad: observacion
                 };
 
                 const ruta = String(record.ruta || '').toUpperCase();
@@ -483,6 +512,9 @@
 
             state.selectedIds.clear();
             els.auditorInput.value = '';
+            if (els.observationInput) {
+                els.observationInput.value = '';
+            }
             renderResults();
             showToast(`Auditoria guardada en ${selectedIds.length} fila(s).`);
         } catch (error) {
