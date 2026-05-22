@@ -414,6 +414,27 @@ h2 {
     overflow-wrap: anywhere;
 }
 
+.record-detail-line {
+    display: grid;
+    gap: 2px;
+    font-size: 13px;
+    line-height: 1.35;
+    color: var(--muted);
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.record-detail-line strong {
+    display: block;
+    color: var(--text);
+    font-weight: 800;
+}
+
+.record-detail-line span {
+    display: block;
+    font-weight: 400;
+}
+
 .record-meta {
     display: grid;
     gap: 4px;
