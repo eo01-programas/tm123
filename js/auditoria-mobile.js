@@ -299,7 +299,8 @@
             const selectedClass = !disabled && checked ? ' record-card-selected' : '';
             const approvedClass = approved ? ' record-card-approved' : '';
             const rejectedClass = rejected ? ' record-card-rejected' : '';
-            const article = TintoreriaUtils.escapeHtml(record.articulo || '');
+            const color = TintoreriaUtils.escapeHtml(TintoreriaUtils.formatColorLabel(record.color || 'Sin color'));
+            const article = TintoreriaUtils.escapeHtml(record.articulo || 'Sin articulo');
             const statusText = TintoreriaUtils.escapeHtml(getAuditoriaRegisteredStatus(record));
             const observationLines = getRegisteredObservationLines(record);
             const reasonText = observationLines.length
@@ -324,7 +325,7 @@
                         </span>
                     </div>
 
-                    <div class="record-subtitle">${article}</div>
+                    <div class="record-detail-line"><strong>${color}</strong> <span>${article}</span></div>
 
                     <div class="record-meta">
                         <div class="meta-line"><strong>Kg(crudo):</strong> ${TintoreriaUtils.escapeHtml(record.peso_kg_crudo || '0')} <span class="meta-separator">|</span> <strong>#rollos/cntd:</strong> ${TintoreriaUtils.escapeHtml(record.cantidad_crudo || '0')}</div>
