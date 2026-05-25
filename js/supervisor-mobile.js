@@ -523,6 +523,7 @@
 
         try {
             const turno = TintoreriaUtils.calculateProductionTurno();
+            const rejectionDate = TintoreriaUtils.formatProcessDateTime(new Date());
             const updatesList = validSelections.map(({ record, rejectConfig }) => {
                 const rejectNumber = rejectConfig.rejectNumber;
                 const updates = {
@@ -531,7 +532,8 @@
                     observacion_calidad: observacion,
                     [`motivo_rechazo_${rejectNumber}`]: motivo,
                     [`supervisor_rechazo_${rejectNumber}`]: supervisor,
-                    [`turno_rechazo_${rejectNumber}`]: turno
+                    [`turno_rechazo_${rejectNumber}`]: turno,
+                    [`fecha_rechazo_${rejectNumber}`]: rejectionDate
                 };
 
                 return {
@@ -607,6 +609,7 @@
         try {
             const turno = TintoreriaUtils.calculateProductionTurno();
             const calidadFin = TintoreriaUtils.formatProcessDateTime(new Date());
+            const approvalDate = calidadFin;
             const updatesList = selectedRecords.map((record) => {
                 const updates = {
                     calidad_estado: 'OK',
@@ -615,6 +618,7 @@
                     quien_aprobo: quienAprobo,
                     supervisor_aprobacion: supervisor,
                     turno_aprobacion: turno,
+                    fecha_aprobacion: approvalDate,
                     observacion_calidad: observacion
                 };
 
