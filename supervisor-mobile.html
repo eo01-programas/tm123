@@ -121,7 +121,7 @@
                         <option value="">Seleccionar tipo...</option>
                     </select>
                 </div>
-                <div class="field-group">
+                <div class="field-group hidden" id="supervisor-mobile-quien-aprobo-group">
                     <label class="field-label" for="supervisor-mobile-quien-aprobo">Quien Aprobo</label>
                     <select class="mobile-select" id="supervisor-mobile-quien-aprobo" name="quien_aprobo">
                         <option value="">Seleccionar quien...</option>
@@ -129,12 +129,12 @@
                 </div>
                 <div class="field-group">
                     <label class="field-label" for="supervisor-mobile-supervisor-aprobacion">Supervisor</label>
-                    <input
-                        type="text"
-                        class="mobile-input"
+                    <select
+                        class="mobile-select"
                         id="supervisor-mobile-supervisor-aprobacion"
-                        name="supervisor_aprobacion"
-                        placeholder="Nombre del Supervisor">
+                        name="supervisor_aprobacion">
+                        <option value="">Seleccionar supervisor...</option>
+                    </select>
                 </div>
                 <div class="field-group">
                     <label class="field-label" for="supervisor-mobile-observacion-aprobacion">Observacion de Calidad</label>
