@@ -611,8 +611,10 @@
             const calidadFin = TintoreriaUtils.formatProcessDateTime(new Date());
             const approvalDate = calidadFin;
             const updatesList = selectedRecords.map((record) => {
+                const calidadInicio = String(record && record.calidad_inicio ? record.calidad_inicio : '').trim() || calidadFin;
                 const updates = {
                     calidad_estado: 'OK',
+                    calidad_inicio: calidadInicio,
                     calidad_fin: calidadFin,
                     tipo_aprobacion: tipoAprobacion,
                     quien_aprobo: quienAprobo,
