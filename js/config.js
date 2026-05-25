@@ -1,4 +1,4 @@
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzTzfJU2Fmz9eM59s4TFFVhJHFH1M8lL3QjzVcilrESmEjwh7JTcHIaNvDyRcN9gtfX/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz3CdjAjt5drZ9RLs2F-lXbtF6oJ7nwx70Oq7pUSHITJvaHzBIiPvnmiQ8K0fZxbGfp/exec';
 const SHEET_ID = '1xyHNMesThJLbYFSizH6xNjJcj2F_gy9lnlCDqwejFN0';
 const DATA_SHEET_NAME = 'Hoja 1';
 
@@ -129,6 +129,11 @@ const MASTER_HEADERS = [
     'quien_aprobo',
     'supervisor_aprobacion',
     'turno_aprobacion',
+    'fecha_rechazo_1',
+    'fecha_rechazo_2',
+    'fecha_rechazo_3',
+    'fecha_rechazo_4',
+    'fecha_aprobacion',
     'embalaje_p',
     'embalaje_fecha',
     'embalaje_estado'
