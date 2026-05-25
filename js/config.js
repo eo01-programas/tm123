@@ -1,4 +1,4 @@
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzhOMGZYJDJygLTT1g_jgMze8z71xTLMV5487tp3McxVocqFW-AMWm_Rf74sx7HIREP/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzTzfJU2Fmz9eM59s4TFFVhJHFH1M8lL3QjzVcilrESmEjwh7JTcHIaNvDyRcN9gtfX/exec';
 const SHEET_ID = '1xyHNMesThJLbYFSizH6xNjJcj2F_gy9lnlCDqwejFN0';
 const DATA_SHEET_NAME = 'Hoja 1';
 
@@ -231,6 +231,13 @@ const QUIEN_APROBO_OPTIONS = [
     'YESENIA LIMAY',
     'PATRICIA ESPINOZA'
 ];
+const SUPERVISOR_APROBACION_OPTIONS = [
+    '',
+    'ALEX FLORES',
+    'RONALD JARAMILLO',
+    'MIGUEL MAMANI',
+    'OTRO'
+];
 const EMBALAJE_ESTADO_OPTIONS = ['', 'OK'];
 const LOCAL_STORAGE_KEY = 'tintoreria-records-mobile-calidad';
 
@@ -281,6 +288,7 @@ window.TintoreriaConfig = {
     MOTIVOS_RECHAZO_OPTIONS,
     TIPO_APROBACION_OPTIONS,
     QUIEN_APROBO_OPTIONS,
+    SUPERVISOR_APROBACION_OPTIONS,
     EMBALAJE_ESTADO_OPTIONS,
     LOCAL_STORAGE_KEY,
     PROCESS_TABS
