@@ -37,6 +37,7 @@
             approveClearBtn: document.getElementById('supervisor-mobile-approve-clear'),
             approveSaveBtn: document.getElementById('supervisor-mobile-approve-save'),
             approveTipoSelect: document.getElementById('supervisor-mobile-tipo-aprobacion'),
+            approveQuienGroup: document.getElementById('supervisor-mobile-quien-aprobo-group'),
             approveQuienSelect: document.getElementById('supervisor-mobile-quien-aprobo'),
             approveSupervisorInput: document.getElementById('supervisor-mobile-supervisor-aprobacion'),
             approveObservationInput: document.getElementById('supervisor-mobile-observacion-aprobacion'),
@@ -123,6 +124,10 @@
         return String(record && record.tipo_aprobacion ? record.tipo_aprobacion : '')
             .trim()
             .toUpperCase();
+    }
+
+    function approvalTypeRequiresApprovedBy(approvalType) {
+        return String(approvalType || '').trim().toUpperCase() === 'APROBADO C/AUTORIZACION';
     }
 
     function hasFinalApproval(record) {
@@ -354,7 +359,27 @@
                 ...record,
                 ...updatedRecord
             });
-        });
+            });
+    }
+
+    function updateApproveQuienVisibility() {
+        const els = getElements();
+        const requiresApprovedBy = approvalTypeRequiresApprovedBy(
+            els.approveTipoSelect && els.approveTipoSelect.value
+                ? els.approveTipoSelect.value
+                : ''
+        );
+
+        if (els.approveQuienGroup) {
+            els.approveQuienGroup.classList.toggle('hidden', !requiresApprovedBy);
+        }
+
+        if (els.approveQuienSelect) {
+            els.approveQuienSelect.disabled = !requiresApprovedBy;
+            if (!requiresApprovedBy) {
+                els.approveQuienSelect.value = '';
+            }
+        }
     }
 
     function openRejectModal() {
@@ -418,6 +443,12 @@
         if (els.approveQuienSelect) {
             els.approveQuienSelect.innerHTML = optionMarkup('', TintoreriaConfig.QUIEN_APROBO_OPTIONS || [], 'Seleccionar quien...');
         }
+
+        if (els.approveSupervisorInput) {
+            els.approveSupervisorInput.innerHTML = optionMarkup('', TintoreriaConfig.SUPERVISOR_APROBACION_OPTIONS || [], 'Seleccionar supervisor...');
+        }
+
+        updateApproveQuienVisibility();
 
         if (els.approveObservationInput) {
             els.approveObservationInput.value = getSharedFieldValue(selectedRecords, 'observacion_calidad');
@@ -492,7 +523,7 @@
 
         try {
             const turno = TintoreriaUtils.calculateProductionTurno();
-            const responses = await Promise.all(validSelections.map(({ record, rejectConfig }) => {
+            const updatesList = validSelections.map(({ record, rejectConfig }) => {
                 const rejectNumber = rejectConfig.rejectNumber;
                 const updates = {
                     calidad_estado: rejectConfig.finalStatus,
@@ -503,13 +534,15 @@
                     [`turno_rechazo_${rejectNumber}`]: turno
                 };
 
-                return TintoreriaAPI.updateRecord(record.id_registro, updates);
-            }));
+                return {
+                    id_registro: record.id_registro,
+                    changes: updates
+                };
+            });
 
-            responses.forEach((response) => {
-                if (response && response.record) {
-                    mergeUpdatedRecord(response.record);
-                }
+            const response = await TintoreriaAPI.updateRecords(updatesList);
+            (response.records || []).forEach((record) => {
+                mergeUpdatedRecord(record);
             });
 
             state.selectedIds.clear();
@@ -536,8 +569,11 @@
         const els = getElements();
         const selectedRecords = getSelectedRecords().filter((record) => !isSupervisorDecisionLocked(record));
         const tipoAprobacion = String(els.approveTipoSelect && els.approveTipoSelect.value ? els.approveTipoSelect.value : '').trim();
-        const quienAprobo = String(els.approveQuienSelect && els.approveQuienSelect.value ? els.approveQuienSelect.value : '').trim();
-        const supervisor = TintoreriaUtils.sanitizePersonName(els.approveSupervisorInput && els.approveSupervisorInput.value ? els.approveSupervisorInput.value : '');
+        const requiresApprovedBy = approvalTypeRequiresApprovedBy(tipoAprobacion);
+        const quienAprobo = requiresApprovedBy
+            ? String(els.approveQuienSelect && els.approveQuienSelect.value ? els.approveQuienSelect.value : '').trim()
+            : '';
+        const supervisor = String(els.approveSupervisorInput && els.approveSupervisorInput.value ? els.approveSupervisorInput.value : '').trim();
         const observacion = String(els.approveObservationInput && els.approveObservationInput.value ? els.approveObservationInput.value : '').trim();
 
         if (!selectedRecords.length) {
@@ -551,7 +587,7 @@
             return;
         }
 
-        if (!quienAprobo) {
+        if (requiresApprovedBy && !quienAprobo) {
             showToast('Selecciona quien aprobo.');
             if (els.approveQuienSelect) els.approveQuienSelect.focus();
             return;
@@ -571,7 +607,7 @@
         try {
             const turno = TintoreriaUtils.calculateProductionTurno();
             const calidadFin = TintoreriaUtils.formatProcessDateTime(new Date());
-            const responses = await Promise.all(selectedRecords.map((record) => {
+            const updatesList = selectedRecords.map((record) => {
                 const updates = {
                     calidad_estado: 'OK',
                     calidad_fin: calidadFin,
@@ -582,13 +618,15 @@
                     observacion_calidad: observacion
                 };
 
-                return TintoreriaAPI.updateRecord(record.id_registro, updates);
-            }));
+                return {
+                    id_registro: record.id_registro,
+                    changes: updates
+                };
+            });
 
-            responses.forEach((response) => {
-                if (response && response.record) {
-                    mergeUpdatedRecord(response.record);
-                }
+            const response = await TintoreriaAPI.updateRecords(updatesList);
+            (response.records || []).forEach((record) => {
+                mergeUpdatedRecord(record);
             });
 
             state.selectedIds.clear();
@@ -813,7 +851,13 @@
                 if (els.approveForm instanceof HTMLFormElement) {
                     els.approveForm.reset();
                 }
+
+                updateApproveQuienVisibility();
             });
+        }
+
+        if (els.approveTipoSelect) {
+            els.approveTipoSelect.addEventListener('change', updateApproveQuienVisibility);
         }
 
         if (els.approveSaveBtn) {
