@@ -27,7 +27,7 @@
             rejectSaveBtn: document.getElementById('supervisor-mobile-reject-save'),
             rejectMotivoInput: document.getElementById('supervisor-mobile-motivo-rechazo'),
             rejectMotivoList: document.getElementById('supervisor-mobile-motivo-rechazo-list'),
-            rejectSupervisorInput: document.getElementById('supervisor-mobile-supervisor-rechazo'),
+            rejectSupervisorSelect: document.getElementById('supervisor-mobile-supervisor-rechazo'),
             rejectObservationInput: document.getElementById('supervisor-mobile-observacion-rechazo'),
             approveModal: document.getElementById('supervisor-mobile-approve-modal'),
             approveModalTitle: document.getElementById('supervisor-mobile-approve-title'),
@@ -397,6 +397,10 @@
             els.rejectMotivoList.innerHTML = datalistOptionMarkup(TintoreriaConfig.MOTIVOS_RECHAZO_OPTIONS || []);
         }
 
+        if (els.rejectSupervisorSelect) {
+            els.rejectSupervisorSelect.innerHTML = optionMarkup('', TintoreriaConfig.SUPERVISOR_APROBACION_OPTIONS || [], 'Seleccionar supervisor...');
+        }
+
         if (els.rejectObservationInput) {
             els.rejectObservationInput.value = getSharedFieldValue(selectedRecords, 'observacion_calidad');
         }
@@ -482,7 +486,7 @@
         const els = getElements();
         const selectedRecords = getSelectedRecords();
         const motivo = String(els.rejectMotivoInput && els.rejectMotivoInput.value ? els.rejectMotivoInput.value : '').trim().toUpperCase();
-        const supervisor = TintoreriaUtils.sanitizePersonName(els.rejectSupervisorInput && els.rejectSupervisorInput.value ? els.rejectSupervisorInput.value : '');
+        const supervisor = String(els.rejectSupervisorSelect && els.rejectSupervisorSelect.value ? els.rejectSupervisorSelect.value : '').trim();
         const observacion = String(els.rejectObservationInput && els.rejectObservationInput.value ? els.rejectObservationInput.value : '').trim();
 
         if (!selectedRecords.length) {
@@ -497,8 +501,8 @@
         }
 
         if (!supervisor) {
-            showToast('Ingresa el nombre del supervisor.');
-            if (els.rejectSupervisorInput) els.rejectSupervisorInput.focus();
+            showToast('Selecciona el supervisor.');
+            if (els.rejectSupervisorSelect) els.rejectSupervisorSelect.focus();
             return;
         }
 
