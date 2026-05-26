@@ -527,6 +527,7 @@
             const updatesList = validSelections.map(({ record, rejectConfig }) => {
                 const rejectNumber = rejectConfig.rejectNumber;
                 const updates = {
+                    calidad_turno: turno,
                     calidad_estado: rejectConfig.finalStatus,
                     cantidad_rechazos: String(rejectNumber),
                     observacion_calidad: observacion,
@@ -613,6 +614,7 @@
             const updatesList = selectedRecords.map((record) => {
                 const calidadInicio = String(record && record.calidad_inicio ? record.calidad_inicio : '').trim() || calidadFin;
                 const updates = {
+                    calidad_turno: turno,
                     calidad_estado: 'OK',
                     calidad_inicio: calidadInicio,
                     calidad_fin: calidadFin,
