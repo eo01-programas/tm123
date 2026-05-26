@@ -238,6 +238,30 @@
         return current[index];
     }
 
+    function updateLocalRecords(updates) {
+        const current = loadLocalRecords();
+        const records = [];
+
+        (updates || []).forEach((update) => {
+            const recordId = update && update.id_registro ? update.id_registro : '';
+            const changes = update && update.changes ? update.changes : {};
+            const index = current.findIndex((record) => String(record.id_registro || '').trim() === String(recordId || '').trim());
+
+            if (index === -1) {
+                return;
+            }
+
+            current[index] = TintoreriaUtils.defaultRecord({
+                ...current[index],
+                ...changes
+            });
+            records.push(current[index]);
+        });
+
+        updateLocalCache(current);
+        return records;
+    }
+
     window.TintoreriaAPI = {
         getCachedRecords() {
             return loadRemoteCachedRecords();
@@ -289,6 +313,54 @@
                 success: true,
                 source: 'remote',
                 record: optimisticRecord
+            };
+        },
+
+        async updateRecords(updates) {
+            if (!Array.isArray(updates) || updates.length === 0) {
+                return {
+                    success: true,
+                    source: TintoreriaUtils.hasConfiguredWebAppUrl() ? 'remote' : 'local',
+                    records: []
+                };
+            }
+
+            if (!TintoreriaUtils.hasConfiguredWebAppUrl()) {
+                return {
+                    success: true,
+                    source: 'local',
+                    records: updateLocalRecords(updates)
+                };
+            }
+
+            const cached = loadRemoteCachedRecords();
+            let optimisticRecords = [];
+
+            if (cached && Array.isArray(cached.records)) {
+                optimisticRecords = updates.map((update) => {
+                    const recordId = String(update && update.id_registro ? update.id_registro : '');
+                    const changes = update && update.changes ? update.changes : {};
+                    const current = cached.records.find((record) => String(record.id_registro || '') === recordId);
+
+                    return TintoreriaUtils.defaultRecord({
+                        ...(current || {}),
+                        id_registro: recordId,
+                        ...changes
+                    });
+                }).filter((record) => String(record.id_registro || '').trim() !== '');
+
+                updateRemoteCache(mergeRecordsById(cached.records, optimisticRecords));
+            }
+
+            await postPayloadNoCors({
+                action: 'updateRecords',
+                updates
+            });
+
+            return {
+                success: true,
+                source: 'remote',
+                records: optimisticRecords
             };
         }
     };
