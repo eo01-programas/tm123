@@ -25,8 +25,7 @@
             rejectForm: document.getElementById('supervisor-mobile-reject-form'),
             rejectClearBtn: document.getElementById('supervisor-mobile-reject-clear'),
             rejectSaveBtn: document.getElementById('supervisor-mobile-reject-save'),
-            rejectMotivoInput: document.getElementById('supervisor-mobile-motivo-rechazo'),
-            rejectMotivoList: document.getElementById('supervisor-mobile-motivo-rechazo-list'),
+            rejectMotivoSelect: document.getElementById('supervisor-mobile-motivo-rechazo'),
             rejectSupervisorSelect: document.getElementById('supervisor-mobile-supervisor-rechazo'),
             rejectObservationInput: document.getElementById('supervisor-mobile-observacion-rechazo'),
             approveModal: document.getElementById('supervisor-mobile-approve-modal'),
@@ -56,13 +55,6 @@
             const selected = selectedValue === optionValue ? 'selected' : '';
             return `<option value="${TintoreriaUtils.escapeHtml(optionValue)}" ${selected}>${TintoreriaUtils.escapeHtml(label)}</option>`;
         }).join('');
-    }
-
-    function datalistOptionMarkup(options) {
-        return (options || [])
-            .filter((optionValue) => String(optionValue || '').trim() !== '')
-            .map((optionValue) => `<option value="${TintoreriaUtils.escapeHtml(optionValue)}"></option>`)
-            .join('');
     }
 
     function normalizeCalidadState(record) {
@@ -393,8 +385,8 @@
             els.rejectForm.reset();
         }
 
-        if (els.rejectMotivoList) {
-            els.rejectMotivoList.innerHTML = datalistOptionMarkup(TintoreriaConfig.MOTIVOS_RECHAZO_OPTIONS || []);
+        if (els.rejectMotivoSelect) {
+            els.rejectMotivoSelect.innerHTML = optionMarkup('', TintoreriaConfig.MOTIVOS_RECHAZO_OPTIONS || [], 'Seleccionar motivo...');
         }
 
         if (els.rejectSupervisorSelect) {
@@ -485,7 +477,7 @@
     async function handleRejectSave() {
         const els = getElements();
         const selectedRecords = getSelectedRecords();
-        const motivo = String(els.rejectMotivoInput && els.rejectMotivoInput.value ? els.rejectMotivoInput.value : '').trim().toUpperCase();
+        const motivo = String(els.rejectMotivoSelect && els.rejectMotivoSelect.value ? els.rejectMotivoSelect.value : '').trim().toUpperCase();
         const supervisor = String(els.rejectSupervisorSelect && els.rejectSupervisorSelect.value ? els.rejectSupervisorSelect.value : '').trim();
         const observacion = String(els.rejectObservationInput && els.rejectObservationInput.value ? els.rejectObservationInput.value : '').trim();
 
@@ -495,8 +487,8 @@
         }
 
         if (!motivo) {
-            showToast('Ingresa el motivo de rechazo.');
-            if (els.rejectMotivoInput) els.rejectMotivoInput.focus();
+            showToast('Selecciona el motivo de rechazo.');
+            if (els.rejectMotivoSelect) els.rejectMotivoSelect.focus();
             return;
         }
 
