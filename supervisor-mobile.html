@@ -72,13 +72,12 @@
             <form class="mobile-form-grid" id="supervisor-mobile-reject-form" autocomplete="off">
                 <div class="field-group">
                     <label class="field-label" for="supervisor-mobile-motivo-rechazo">Motivo de Rechazo</label>
-                    <input
-                        class="mobile-input"
+                    <select
+                        class="mobile-select"
                         id="supervisor-mobile-motivo-rechazo"
-                        name="motivo_rechazo_1"
-                        list="supervisor-mobile-motivo-rechazo-list"
-                        placeholder="Escribe para buscar motivo...">
-                    <datalist id="supervisor-mobile-motivo-rechazo-list"></datalist>
+                        name="motivo_rechazo_1">
+                        <option value="">Seleccionar motivo...</option>
+                    </select>
                 </div>
                 <div class="field-group">
                     <label class="field-label" for="supervisor-mobile-supervisor-rechazo">Supervisor</label>
