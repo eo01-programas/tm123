@@ -525,6 +525,7 @@
                 const updates = {
                     calidad_turno: turno,
                     calidad_estado: rejectConfig.finalStatus,
+                    calidad_inicio: String(record.calidad_inicio || '').trim() || rejectionDate,
                     cantidad_rechazos: String(rejectNumber),
                     observacion_calidad: observacion,
                     [`motivo_rechazo_${rejectNumber}`]: motivo,
