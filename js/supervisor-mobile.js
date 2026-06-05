@@ -323,6 +323,33 @@
         return '';
     }
 
+    function buildEstadoUpdatesByRuta(ruta) {
+        const normalizedRuta = String(ruta || '').toUpperCase();
+        if (!normalizedRuta || normalizedRuta.includes('HUMECT') || normalizedRuta.includes('TERMOFI')) {
+            return {
+                plegado_estado: 'OK',
+                rama_crudo_estado: 'OK',
+                preparado_estado: 'OK',
+                tenido_estado: 'OK',
+                abridora_estado: 'OK',
+                rama_tenido_estado: 'OK',
+                acabado_especial_estado: 'OK',
+                acab_espec_estado: 'OK'
+            };
+        }
+        if (normalizedRuta.includes('DIRECTO')) {
+            return {
+                preparado_estado: 'OK',
+                tenido_estado: 'OK',
+                abridora_estado: 'OK',
+                rama_tenido_estado: 'OK',
+                acabado_especial_estado: 'OK',
+                acab_espec_estado: 'OK'
+            };
+        }
+        return {};
+    }
+
     function getNextRejectConfig(record) {
         const currentRejectNumber = getCurrentRejectNumber(record);
         const nextRejectNumber = currentRejectNumber + 1;
@@ -523,6 +550,7 @@
             const updatesList = validSelections.map(({ record, rejectConfig }) => {
                 const rejectNumber = rejectConfig.rejectNumber;
                 const updates = {
+                    ...buildEstadoUpdatesByRuta(record && record.ruta),
                     calidad_turno: turno,
                     calidad_estado: rejectConfig.finalStatus,
                     calidad_inicio: String(record.calidad_inicio || '').trim() || rejectionDate,
