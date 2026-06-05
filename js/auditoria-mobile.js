@@ -161,6 +161,33 @@
         return 'Ya fue registrado: AUDITANDO';
     }
 
+    function buildEstadoUpdatesByRuta(ruta) {
+        const normalizedRuta = String(ruta || '').toUpperCase();
+        if (!normalizedRuta || normalizedRuta.includes('HUMECT') || normalizedRuta.includes('TERMOFI')) {
+            return {
+                plegado_estado: 'OK',
+                rama_crudo_estado: 'OK',
+                preparado_estado: 'OK',
+                tenido_estado: 'OK',
+                abridora_estado: 'OK',
+                rama_tenido_estado: 'OK',
+                acabado_especial_estado: 'OK',
+                acab_espec_estado: 'OK'
+            };
+        }
+        if (normalizedRuta.includes('DIRECTO')) {
+            return {
+                preparado_estado: 'OK',
+                tenido_estado: 'OK',
+                abridora_estado: 'OK',
+                rama_tenido_estado: 'OK',
+                acabado_especial_estado: 'OK',
+                acab_espec_estado: 'OK'
+            };
+        }
+        return {};
+    }
+
     function formatRecordTitle(record) {
         return `${record.cliente || 'Sin cliente'} - ${TintoreriaUtils.formatOpPartida(record.op_tela, record.partida)}`;
     }
@@ -476,30 +503,12 @@
                 }
 
                 const updates = {
+                    ...buildEstadoUpdatesByRuta(record && record.ruta),
                     calidad_turno: turno,
                     calidad_auditor: auditor,
                     calidad_inicio: TintoreriaUtils.formatProcessDateTime(new Date()),
                     observacion_calidad: observacion
                 };
-
-                const ruta = String(record.ruta || '').toUpperCase();
-                if (ruta.includes('HUMECT') || ruta.includes('TERMOFI')) {
-                    updates.plegado_estado = 'OK';
-                    updates.rama_crudo_estado = 'OK';
-                    updates.preparado_estado = 'OK';
-                    updates.tenido_estado = 'OK';
-                    updates.abridora_estado = 'OK';
-                    updates.rama_tenido_estado = 'OK';
-                    updates.acabado_especial_estado = 'OK';
-                    updates.acab_espec_estado = 'OK';
-                } else if (ruta.includes('DIRECTO')) {
-                    updates.preparado_estado = 'OK';
-                    updates.tenido_estado = 'OK';
-                    updates.abridora_estado = 'OK';
-                    updates.rama_tenido_estado = 'OK';
-                    updates.acabado_especial_estado = 'OK';
-                    updates.acab_espec_estado = 'OK';
-                }
 
                 return TintoreriaAPI.updateRecord(recordId, updates);
             });
