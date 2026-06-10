@@ -1,4 +1,4 @@
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyg8b4_H-hQmZgYl-XJ9CirbYJuj93GnTZ7-Sx572yLTDRlEskhEUdaLRWdCR-WlyME/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxEFPaj9h7Reot611VpXxDleCtD9YZyV70Fw-mOb3_UTIToiBLZ7-3Fs0Ypg6zTfKmb/exec';
 const SHEET_ID = '1xyHNMesThJLbYFSizH6xNjJcj2F_gy9lnlCDqwejFN0';
 const DATA_SHEET_NAME = 'Hoja 1';
 
@@ -236,17 +236,13 @@ const TIPO_APROBACION_OPTIONS = [
 ];
 const QUIEN_APROBO_OPTIONS = [
     '',
-    'CLIENTE',
-    'JOSE CASTILLO',
-    'FERNANDO UGARTE',
-    'JORGE VIDAL',
-    'CARLA MONTOYA',
-    'CARLA QUIÑONES',
-    'FLOR VELEZ',
-    'KARLITA REYES',
-    'LUIS COLAN',
-    'YESENIA LIMAY',
-    'PATRICIA ESPINOZA'
+    'G. OPERACIONES',
+    'G. COMERCIAL',
+    'DT TINTORERIA',
+    'DT CONFECCIONES',
+    'ASEG. CAL. CONFECC',
+    'JEFATURA TINTO',
+    'EJECUTIVO COM.'
 ];
 const SUPERVISOR_APROBACION_OPTIONS = [
     '',
