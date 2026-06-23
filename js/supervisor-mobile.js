@@ -70,7 +70,7 @@
             return parsedCount;
         }
 
-        for (let index = 4; index >= 1; index -= 1) {
+        for (let index = 7; index >= 1; index -= 1) {
             const motivo = String(record && record[`motivo_rechazo_${index}`] ? record[`motivo_rechazo_${index}`] : '').trim();
             const supervisor = String(record && record[`supervisor_rechazo_${index}`] ? record[`supervisor_rechazo_${index}`] : '').trim();
             const turno = String(record && record[`turno_rechazo_${index}`] ? record[`turno_rechazo_${index}`] : '').trim();
@@ -90,6 +90,9 @@
             if (rejectNumber === 2) return '2do Rechazo';
             if (rejectNumber === 3) return '3er Rechazo';
             if (rejectNumber === 4) return '4to Rechazo';
+            if (rejectNumber === 5) return '5to Rechazo';
+            if (rejectNumber === 6) return '6to Rechazo';
+            if (rejectNumber === 7) return '7mo Rechazo';
             return '';
         }
 
@@ -101,6 +104,9 @@
         if (normalizedState === '2DO RECHAZO') return '2do RECHAZO';
         if (normalizedState === '3ER RECHAZO') return '3er RECHAZO';
         if (normalizedState === '4TO RECHAZO') return '4to RECHAZO';
+        if (normalizedState === '5TO RECHAZO') return '5to RECHAZO';
+        if (normalizedState === '6TO RECHAZO') return '6to RECHAZO';
+        if (normalizedState === '7MO RECHAZO') return '7mo RECHAZO';
         if (normalizedState === 'RECHAZADO') return '1er RECHAZO';
         return record.calidad_estado || normalizedState;
     }
@@ -143,10 +149,13 @@
             1: '1er Rechazo',
             2: '2do Rechazo',
             3: '3er Rechazo',
-            4: '4to Rechazo'
+            4: '4to Rechazo',
+            5: '5to Rechazo',
+            6: '6to Rechazo',
+            7: '7mo Rechazo'
         };
 
-        const rejectionLines = [1, 2, 3, 4]
+        const rejectionLines = [1, 2, 3, 4, 5, 6, 7]
             .map((index) => {
                 const reason = String(record && record[`motivo_rechazo_${index}`] ? record[`motivo_rechazo_${index}`] : '').trim();
                 const supervisor = String(record && record[`supervisor_rechazo_${index}`] ? record[`supervisor_rechazo_${index}`] : '').trim();
@@ -312,6 +321,9 @@
         if (currentState === '2DO RECHAZO') return 2;
         if (currentState === '3ER RECHAZO') return 3;
         if (currentState === '4TO RECHAZO') return 4;
+        if (currentState === '5TO RECHAZO') return 5;
+        if (currentState === '6TO RECHAZO') return 6;
+        if (currentState === '7MO RECHAZO') return 7;
         return 0;
     }
 
@@ -320,6 +332,9 @@
         if (rejectNumber === 2) return '2do RECHAZO';
         if (rejectNumber === 3) return '3er RECHAZO';
         if (rejectNumber === 4) return '4to RECHAZO';
+        if (rejectNumber === 5) return '5to RECHAZO';
+        if (rejectNumber === 6) return '6to RECHAZO';
+        if (rejectNumber === 7) return '7mo RECHAZO';
         return '';
     }
 
@@ -537,7 +552,7 @@
         const skippedCount = selectedRecords.length - validSelections.length;
 
         if (!validSelections.length) {
-            showToast('Las filas seleccionadas ya llegaron a 4to rechazo.');
+            showToast('Las filas seleccionadas ya llegaron a 7mo rechazo.');
             return;
         }
 
