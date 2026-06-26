@@ -481,7 +481,8 @@
         const selectedIds = Array.from(state.selectedIds);
         const auditor = TintoreriaUtils.sanitizePersonName(els.auditorInput.value || '');
         const observacion = String(els.observationInput && els.observationInput.value ? els.observationInput.value : '').trim();
-        const turno = String(els.turnoInput.value || calculateTurno()).trim() || calculateTurno();
+        const turno = calculateTurno();
+        els.turnoInput.value = turno;
 
         if (!selectedIds.length) {
             showToast('Selecciona al menos una fila.');
