@@ -656,6 +656,35 @@ h2 {
     background: #b42828;
 }
 
+.mobile-ruta-options {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.mobile-ruta-button {
+    width: 100%;
+    min-height: 64px;
+    font-size: 18px;
+    letter-spacing: 0.06em;
+}
+
+.mobile-ruta-button-lavada {
+    background: linear-gradient(180deg, #2e90fa 0%, #1a6fd0 100%);
+    box-shadow: 0 12px 24px rgba(46, 144, 250, 0.26);
+}
+
+.mobile-ruta-button-acabada {
+    background: linear-gradient(180deg, #12b76a 0%, #0c8f54 100%);
+    box-shadow: 0 12px 24px rgba(18, 183, 106, 0.26);
+}
+
+.mobile-ruta-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .hidden {
     display: none !important;
 }
