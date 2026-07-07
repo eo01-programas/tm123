@@ -495,6 +495,12 @@
             return;
         }
 
+        if (!TintoreriaUtils.isValidAuditorName(auditor)) {
+            showToast('En Auditor solo va el nombre. Escribe el detalle en Observacion de Calidad.');
+            els.auditorInput.focus();
+            return;
+        }
+
         els.saveBtn.disabled = true;
         els.saveBtn.textContent = 'Guardando...';
 
