@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Supervisor Movil</title>
-    <link rel="stylesheet" href="css/auditoria-mobile.css?v=20260526-2">
+    <link rel="stylesheet" href="css/auditoria-mobile.css?v=20260707-1">
 </head>
 <body>
     <main class="mobile-shell">
@@ -156,12 +156,28 @@
         </div>
     </div>
 
+    <div class="mobile-modal-backdrop hidden" id="supervisor-mobile-ruta-modal">
+        <div class="mobile-modal-card">
+            <div class="mobile-modal-head">
+                <div>
+                    <h3 id="supervisor-mobile-ruta-title">¿Cuál es la <strong>RUTA</strong> de la tela?</h3>
+                </div>
+                <button class="mobile-modal-close" id="supervisor-mobile-ruta-close" type="button" aria-label="Cerrar">x</button>
+            </div>
+
+            <div class="mobile-ruta-options">
+                <button type="button" class="mobile-decision-button mobile-ruta-button mobile-ruta-button-lavada" id="supervisor-mobile-ruta-lavada" data-ruta="LAVADA">LAVADA</button>
+                <button type="button" class="mobile-decision-button mobile-ruta-button mobile-ruta-button-acabada" id="supervisor-mobile-ruta-acabada" data-ruta="ACABADA">ACABADA</button>
+            </div>
+        </div>
+    </div>
+
     <div id="supervisor-mobile-toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-    <script src="js/config.js?v=20260526-2"></script>
-    <script src="js/utils.js?v=20260526-2"></script>
-    <script src="js/api.js?v=20260526-2"></script>
-    <script src="js/qr-scanner.js?v=20260526-2"></script>
-    <script src="js/supervisor-mobile.js?v=20260526-2"></script>
+    <script src="js/config.js?v=20260707-1"></script>
+    <script src="js/utils.js?v=20260707-1"></script>
+    <script src="js/api.js?v=20260707-1"></script>
+    <script src="js/qr-scanner.js?v=20260707-1"></script>
+    <script src="js/supervisor-mobile.js?v=20260707-1"></script>
 </body>
 </html>
