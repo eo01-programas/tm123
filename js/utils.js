@@ -421,6 +421,36 @@
         return /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü]+(?: [A-Za-zÁÉÍÓÚáéíóúÑñÜü]+)?$/.test(value);
     }
 
+    const AUDITOR_FORBIDDEN_WORDS = [
+        'REVISADO', 'REVIZADO', 'REVISADA', 'REVIZADA', 'REVISAR',
+        'FALTA', 'FALTAN', 'PENDIENTE', 'PENDIENTES',
+        'ROLLO', 'ROLLOS', 'UBICAR', 'TALLA', 'TALLAS'
+    ];
+
+    function isValidAuditorName(value) {
+        const normalized = sanitizePersonName(value);
+        if (!normalized) {
+            return false;
+        }
+
+        if (!/^[A-ZÁÉÍÓÚÑÜ /]+$/.test(normalized)) {
+            return false;
+        }
+
+        const segments = normalized.split('/').map((segment) => segment.trim());
+        if (segments.length > 2 || segments.some((segment) => !segment)) {
+            return false;
+        }
+
+        const hasLongSegment = segments.some((segment) => segment.split(' ').length > 2);
+        if (hasLongSegment) {
+            return false;
+        }
+
+        const words = normalized.split(/[ /]+/).filter(Boolean);
+        return !words.some((word) => AUDITOR_FORBIDDEN_WORDS.includes(word));
+    }
+
     function formatOpPartida(opTela, partida) {
         const opValue = String(opTela === undefined || opTela === null ? '' : opTela).trim();
         const partidaValue = String(partida === undefined || partida === null ? '' : partida).trim();
@@ -625,6 +655,7 @@
         isValidNumericRatio,
         sanitizePersonName,
         isValidPersonName,
+        isValidAuditorName,
         formatOpPartida,
         buildMaestroDuplicateKey,
         buildRecordMatchKey,
