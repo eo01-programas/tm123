@@ -1,4 +1,4 @@
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycby3Zr0NdF2yUwhGyrsP_1BP5UOo3e0pYr60GMEGmY55RyqLGTXF-5EtWg33Y2tXORf4/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx8F7DcWagxjGo_EOlkEg0KNWAzAhkEef_u3lRsJplklx-8ekqXW_KnFUzZQoVVQwlG/exec';
 const SHEET_ID = '1xyHNMesThJLbYFSizH6xNjJcj2F_gy9lnlCDqwejFN0';
 const DATA_SHEET_NAME = 'Hoja 1';
 
@@ -92,8 +92,8 @@ const MASTER_HEADERS = [
     'rama_tenido_velocidad',
     'rama_tenido_alimentacion',
     'rama_tenido_ancho_de_cadena',
-    'rama_tenido_orillo_derecho',
-    'rama_tenido_orillo_izquierdo',
+    'rama_tenido_motivo',
+    'rama_tenido_sub_motivo',
     'rama_tenido_observaciones',
     'rama_tenido_inicio',
     'rama_tenido_fin',
@@ -154,7 +154,8 @@ const MASTER_HEADERS = [
     'secado_operario',
     'secado_estado',
     'secado_inicio',
-    'secado_fin'
+    'secado_fin',
+    'ruta_tela_final'
 ];
 
 const ROUTE_OPTIONS = ['', 'Termoficado', 'Humectado', 'Directo'];
