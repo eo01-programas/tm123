@@ -40,6 +40,10 @@
             approveQuienSelect: document.getElementById('supervisor-mobile-quien-aprobo'),
             approveSupervisorInput: document.getElementById('supervisor-mobile-supervisor-aprobacion'),
             approveObservationInput: document.getElementById('supervisor-mobile-observacion-aprobacion'),
+            rutaModal: document.getElementById('supervisor-mobile-ruta-modal'),
+            rutaModalClose: document.getElementById('supervisor-mobile-ruta-close'),
+            rutaLavadaBtn: document.getElementById('supervisor-mobile-ruta-lavada'),
+            rutaAcabadaBtn: document.getElementById('supervisor-mobile-ruta-acabada'),
             toast: document.getElementById('supervisor-mobile-toast')
         };
     }
@@ -516,6 +520,35 @@
         if (els.approveForm instanceof HTMLFormElement) {
             els.approveForm.reset();
         }
+
+        closeRutaModal();
+    }
+
+    function openRutaModal() {
+        const els = getElements();
+        if (!els.rutaModal) {
+            return;
+        }
+
+        setRutaButtonsDisabled(false);
+        els.rutaModal.classList.remove('hidden');
+    }
+
+    function closeRutaModal() {
+        const els = getElements();
+        if (els.rutaModal) {
+            els.rutaModal.classList.add('hidden');
+        }
+    }
+
+    function setRutaButtonsDisabled(disabled) {
+        const els = getElements();
+        if (els.rutaLavadaBtn) {
+            els.rutaLavadaBtn.disabled = disabled;
+        }
+        if (els.rutaAcabadaBtn) {
+            els.rutaAcabadaBtn.disabled = disabled;
+        }
     }
 
     async function handleRejectSave() {
@@ -610,7 +643,7 @@
         }
     }
 
-    async function handleApproveSave() {
+    function handleApproveSave() {
         const els = getElements();
         const selectedRecords = getSelectedRecords().filter((record) => !isSupervisorDecisionLocked(record));
         const tipoAprobacion = String(els.approveTipoSelect && els.approveTipoSelect.value ? els.approveTipoSelect.value : '').trim();
@@ -619,7 +652,6 @@
             ? String(els.approveQuienSelect && els.approveQuienSelect.value ? els.approveQuienSelect.value : '').trim()
             : '';
         const supervisor = String(els.approveSupervisorInput && els.approveSupervisorInput.value ? els.approveSupervisorInput.value : '').trim();
-        const observacion = String(els.approveObservationInput && els.approveObservationInput.value ? els.approveObservationInput.value : '').trim();
 
         if (!selectedRecords.length) {
             showToast('Selecciona al menos una fila.');
@@ -644,6 +676,28 @@
             return;
         }
 
+        openRutaModal();
+    }
+
+    async function handleRutaSelection(rutaTelaFinal) {
+        const els = getElements();
+        const selectedRecords = getSelectedRecords().filter((record) => !isSupervisorDecisionLocked(record));
+        const tipoAprobacion = String(els.approveTipoSelect && els.approveTipoSelect.value ? els.approveTipoSelect.value : '').trim();
+        const requiresApprovedBy = approvalTypeRequiresApprovedBy(tipoAprobacion);
+        const quienAprobo = requiresApprovedBy
+            ? String(els.approveQuienSelect && els.approveQuienSelect.value ? els.approveQuienSelect.value : '').trim()
+            : '';
+        const supervisor = String(els.approveSupervisorInput && els.approveSupervisorInput.value ? els.approveSupervisorInput.value : '').trim();
+        const observacion = String(els.approveObservationInput && els.approveObservationInput.value ? els.approveObservationInput.value : '').trim();
+
+        if (!selectedRecords.length) {
+            closeRutaModal();
+            showToast('Selecciona al menos una fila.');
+            return;
+        }
+
+        setRutaButtonsDisabled(true);
+
         if (els.approveSaveBtn) {
             els.approveSaveBtn.disabled = true;
             els.approveSaveBtn.textContent = 'Guardando...';
@@ -665,7 +719,8 @@
                     supervisor_aprobacion: supervisor,
                     turno_aprobacion: turno,
                     fecha_aprobacion: approvalDate,
-                    observacion_calidad: observacion
+                    observacion_calidad: observacion,
+                    ruta_tela_final: rutaTelaFinal
                 };
 
                 return {
@@ -686,6 +741,7 @@
         } catch (error) {
             showToast(error && error.message ? error.message : 'No se pudo guardar la aprobacion.');
         } finally {
+            setRutaButtonsDisabled(false);
             if (els.approveSaveBtn) {
                 els.approveSaveBtn.disabled = false;
                 els.approveSaveBtn.textContent = 'Aprobar';
@@ -914,6 +970,26 @@
             els.approveSaveBtn.addEventListener('click', handleApproveSave);
         }
 
+        if (els.rutaLavadaBtn) {
+            els.rutaLavadaBtn.addEventListener('click', () => handleRutaSelection('LAVADA'));
+        }
+
+        if (els.rutaAcabadaBtn) {
+            els.rutaAcabadaBtn.addEventListener('click', () => handleRutaSelection('ACABADA'));
+        }
+
+        if (els.rutaModalClose) {
+            els.rutaModalClose.addEventListener('click', closeRutaModal);
+        }
+
+        if (els.rutaModal) {
+            els.rutaModal.addEventListener('click', (event) => {
+                if (event.target === els.rutaModal) {
+                    closeRutaModal();
+                }
+            });
+        }
+
         els.resultList.addEventListener('change', (event) => {
             const target = event.target;
             if (!(target instanceof HTMLInputElement)) {
@@ -947,6 +1023,11 @@
 
         document.addEventListener('keydown', (event) => {
             if (event.key !== 'Escape') {
+                return;
+            }
+
+            if (els.rutaModal && !els.rutaModal.classList.contains('hidden')) {
+                closeRutaModal();
                 return;
             }
 
