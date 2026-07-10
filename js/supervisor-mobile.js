@@ -710,6 +710,7 @@
             const updatesList = selectedRecords.map((record) => {
                 const calidadInicio = String(record && record.calidad_inicio ? record.calidad_inicio : '').trim() || calidadFin;
                 const updates = {
+                    ...buildEstadoUpdatesByRuta(record && record.ruta),
                     calidad_turno: turno,
                     calidad_estado: 'OK',
                     calidad_inicio: calidadInicio,
