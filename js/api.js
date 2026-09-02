@@ -2,6 +2,9 @@
     const STORAGE_KEY = LOCAL_STORAGE_KEY;
     const STORAGE_META_KEY = `${STORAGE_KEY}-meta`;
     let memoryRecords = [];
+    let lastListResponseText = null;
+    let localWriteDisabled = false;
+    let persistTimer = null;
 
     function cloneRecords(records) {
         return (records || []).map((record) => TintoreriaUtils.defaultRecord(record));
@@ -26,12 +29,18 @@
         }
     }
 
-    function saveLocalRecords(records) {
-        memoryRecords = cloneRecords(records);
+    function writeLocalStorageRecords(records) {
+        // Si la hoja completa no entra en la cuota de localStorage no vale la
+        // pena reintentarlo: serializar miles de filas para volver a fallar
+        // costaba segundos en cada guardado. Desde ahi la cache vive en memoria.
+        if (localWriteDisabled) {
+            return;
+        }
 
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
         } catch (error) {
+            localWriteDisabled = true;
             console.warn('No se pudo guardar el cache local, se usara solo memoria.', error);
             try {
                 localStorage.removeItem(STORAGE_KEY);
@@ -39,6 +48,11 @@
                 console.warn('No se pudo limpiar el cache local.', removeError);
             }
         }
+    }
+
+    function saveLocalRecords(records) {
+        memoryRecords = cloneRecords(records);
+        writeLocalStorageRecords(records);
     }
 
     function loadStorageMeta() {
@@ -200,12 +214,65 @@
             throw new Error(`El Sheet respondio con HTTP ${response.status}.`);
         }
 
-        const payload = parseGvizPayload(await response.text());
+        const text = await response.text();
+
+        // Si el Sheet devolvio exactamente lo mismo que la ultima vez, no se
+        // reprocesa nada: parsear, normalizar y guardar toda la hoja es
+        // costoso y congelaba un instante la interfaz en los celulares.
+        if (lastListResponseText !== null && text === lastListResponseText && memoryRecords.length) {
+            return null;
+        }
+
+        const payload = parseGvizPayload(text);
         if (payload.status !== 'ok') {
             throw new Error('El Sheet no devolvio datos validos.');
         }
 
-        return buildRecordsFromGvizTable(payload.table || {});
+        const records = buildRecordsFromGvizTable(payload.table || {});
+        lastListResponseText = text;
+        return records;
+    }
+
+    async function fetchJson(url) {
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            cache: 'no-store',
+            headers: {
+                Accept: 'application/json, text/javascript, */*;q=0.1'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`El servidor respondio con HTTP ${response.status}.`);
+        }
+
+        const payload = await response.json();
+        if (!payload || payload.success === false) {
+            throw new Error(payload && payload.message ? payload.message : 'El servidor no devolvio datos validos.');
+        }
+
+        return payload;
+    }
+
+    async function searchRemoteRecordsByOpPartida(query) {
+        const normalizedQuery = TintoreriaUtils.normalizeOpPartidaSearchValue(query);
+
+        if (!normalizedQuery) {
+            return [];
+        }
+
+        if (!TintoreriaUtils.hasConfiguredWebAppUrl()) {
+            return [];
+        }
+
+        const url = new URL(WEB_APP_URL);
+        url.searchParams.set('action', 'searchOpPartida');
+        url.searchParams.set('query', query);
+
+        const payload = await fetchJson(url);
+        return TintoreriaUtils.sortRecords(
+            (payload.records || []).map((record) => TintoreriaUtils.defaultRecord(record))
+        );
     }
 
     async function postPayloadNoCors(payload) {
@@ -220,6 +287,98 @@
             mode: 'no-cors',
             body: formData
         });
+    }
+
+    // Campos que deciden el orden de la cache (ver TintoreriaUtils.sortRecords).
+    const CACHE_SORT_FIELDS = ['F_ing_crudo', 'fecha_registro'];
+
+    // La copia en disco se deja para despues del guardado: es solo respaldo y
+    // serializar la hoja entera bloqueaba la interfaz justo al tocar Guardar.
+    function scheduleLocalStoragePersist() {
+        if (localWriteDisabled || persistTimer) {
+            return;
+        }
+
+        persistTimer = setTimeout(() => {
+            persistTimer = null;
+            writeLocalStorageRecords(memoryRecords);
+            saveStorageMeta({
+                mode: 'remote',
+                updatedAt: new Date().toISOString(),
+                recordCount: memoryRecords.length
+            });
+        }, 1500);
+    }
+
+    // Aplica los cambios sobre la cache tocando solo los registros afectados.
+    // Antes cada guardado clonaba, normalizaba y ordenaba la hoja entera (miles
+    // de filas x ~160 columnas) varias veces, y en eso se iba casi toda la
+    // demora que se sentia al guardar una auditoria de varias filas.
+    function applyOptimisticChanges(updates) {
+        const meta = loadStorageMeta();
+        if (!meta || meta.mode !== 'remote') {
+            return [];
+        }
+
+        if (!memoryRecords.length) {
+            loadLocalRecords();
+        }
+
+        if (!memoryRecords.length) {
+            return [];
+        }
+
+        // memoryRecords es interno: loadLocalRecords clona al leer y
+        // saveLocalRecords clona al escribir, asi que nadie de fuera comparte
+        // estos objetos y se pueden reutilizar los que no cambian.
+        const records = memoryRecords.slice();
+        const indexById = new Map();
+        records.forEach((record, index) => {
+            indexById.set(String(record.id_registro || '').trim(), index);
+        });
+
+        const touched = [];
+        let needsSort = false;
+
+        (updates || []).forEach((update) => {
+            const recordId = String(update && update.id_registro ? update.id_registro : '').trim();
+            if (!recordId) {
+                return;
+            }
+
+            const changes = update && update.changes ? update.changes : {};
+            const index = indexById.has(recordId) ? indexById.get(recordId) : -1;
+            const nextRecord = TintoreriaUtils.defaultRecord({
+                ...(index >= 0 ? records[index] : {}),
+                id_registro: recordId,
+                ...changes
+            });
+
+            if (index >= 0) {
+                records[index] = nextRecord;
+            } else {
+                indexById.set(recordId, records.length);
+                records.push(nextRecord);
+                needsSort = true;
+            }
+
+            if (CACHE_SORT_FIELDS.some((field) => Object.prototype.hasOwnProperty.call(changes, field))) {
+                needsSort = true;
+            }
+
+            touched.push(nextRecord);
+        });
+
+        if (!touched.length) {
+            return [];
+        }
+
+        // Reordenar solo si cambio algo que afecta al orden: sortRecords parsea
+        // dos fechas por comparacion y con miles de filas se nota.
+        memoryRecords = needsSort ? TintoreriaUtils.sortRecords(records) : records;
+        scheduleLocalStoragePersist();
+
+        return touched.map((record) => TintoreriaUtils.defaultRecord(record));
     }
 
     function updateLocalRecord(recordId, changes) {
@@ -269,11 +428,39 @@
         },
 
         async listRecords() {
-            const records = updateRemoteCache(await listRemoteRecords());
+            const remoteRecords = await listRemoteRecords();
+
+            // null: el Sheet no cambio desde la ultima consulta.
+            if (remoteRecords === null) {
+                return {
+                    success: true,
+                    source: 'remote',
+                    unchanged: true,
+                    records: []
+                };
+            }
+
+            const records = updateRemoteCache(remoteRecords);
             return {
                 success: true,
                 source: 'remote',
                 records
+            };
+        },
+
+        async findRecordsByOpPartida(query) {
+            const remoteRecords = await searchRemoteRecordsByOpPartida(query);
+
+            if (remoteRecords.length) {
+                const cached = loadRemoteCachedRecords();
+                const baseRecords = cached && Array.isArray(cached.records) ? cached.records : loadLocalRecords();
+                updateRemoteCache(mergeRecordsById(baseRecords, remoteRecords));
+            }
+
+            return {
+                success: true,
+                source: 'remote',
+                records: remoteRecords
             };
         },
 
@@ -290,19 +477,7 @@
                 };
             }
 
-            const cached = loadRemoteCachedRecords();
-            let optimisticRecord = null;
-
-            if (cached && Array.isArray(cached.records)) {
-                const current = cached.records.find((record) => String(record.id_registro || '') === String(recordId));
-                optimisticRecord = TintoreriaUtils.defaultRecord({
-                    ...(current || {}),
-                    id_registro: recordId,
-                    ...changes
-                });
-
-                updateRemoteCache(mergeRecordsById(cached.records, [optimisticRecord]));
-            }
+            const optimisticRecords = applyOptimisticChanges([{ id_registro: recordId, changes }]);
 
             await postPayloadNoCors({
                 action: 'updateRecord',
@@ -313,7 +488,7 @@
             return {
                 success: true,
                 source: 'remote',
-                record: optimisticRecord
+                record: optimisticRecords.length ? optimisticRecords[0] : null
             };
         },
 
@@ -334,24 +509,7 @@
                 };
             }
 
-            const cached = loadRemoteCachedRecords();
-            let optimisticRecords = [];
-
-            if (cached && Array.isArray(cached.records)) {
-                optimisticRecords = updates.map((update) => {
-                    const recordId = String(update && update.id_registro ? update.id_registro : '');
-                    const changes = update && update.changes ? update.changes : {};
-                    const current = cached.records.find((record) => String(record.id_registro || '') === recordId);
-
-                    return TintoreriaUtils.defaultRecord({
-                        ...(current || {}),
-                        id_registro: recordId,
-                        ...changes
-                    });
-                }).filter((record) => String(record.id_registro || '').trim() !== '');
-
-                updateRemoteCache(mergeRecordsById(cached.records, optimisticRecords));
-            }
+            const optimisticRecords = applyOptimisticChanges(updates);
 
             await postPayloadNoCors({
                 action: 'updateRecords',
